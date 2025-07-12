@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 
 LOCAL_APPS = []
 
-THIRD_PARTY_APPS = []
+THIRD_PARTY_APPS = ["rest_framework", "drf_yasg"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
