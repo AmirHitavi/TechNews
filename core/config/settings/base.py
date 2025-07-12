@@ -10,25 +10,26 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from os import path
 from pathlib import Path
 
+import environ
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+environ.Env.read_env(path.join(BASE_DIR, ".env"))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-%p(05l3adavf&^6#hi@d@gl0@h1%u9a##ebt34!$bn0977v6x8"
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+env = environ.Env()
 
 ALLOWED_HOSTS = []
 
 
 # Application definition
+
+LOCAL_APPS = []
+
+THIRD_PARTY_APPS = []
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -37,6 +38,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    *LOCAL_APPS,
+    *THIRD_PARTY_APPS,
 ]
 
 MIDDLEWARE = [
@@ -67,17 +70,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
-
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
 
 
 # Password validation
@@ -115,7 +107,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = path.join(BASE_DIR, "static")
 
+MEDIA_URL = "media/"
+MEDIA_ROOT = path.join(BASE_DIR, "media")
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
