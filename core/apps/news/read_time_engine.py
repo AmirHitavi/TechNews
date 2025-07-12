@@ -14,7 +14,7 @@ class NewsReadTimeEngine:
     @staticmethod
     def estimate(news):
         words_count_title = NewsReadTimeEngine.word_count(news.title)
-        words_count_content = NewsReadTimeEngine.word_count(news.text)
+        words_count_content = NewsReadTimeEngine.word_count(news.content)
 
         total_time = (
             words_count_title + words_count_content

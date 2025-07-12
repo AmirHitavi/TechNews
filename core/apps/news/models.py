@@ -31,6 +31,8 @@ class News(models.Model):
     tags = models.ManyToManyField(Tags, related_name="news")
 
     class Meta:
+        verbose_name = "News"
+        verbose_name_plural = "News"
         ordering = ["-updated_at", "-created_at"]
 
     def __str__(self):
