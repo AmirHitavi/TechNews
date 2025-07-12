@@ -27,7 +27,7 @@ ALLOWED_HOSTS = []
 
 # Application definition
 
-LOCAL_APPS = []
+LOCAL_APPS = ["apps.news.apps.NewsConfig"]
 
 THIRD_PARTY_APPS = ["rest_framework", "drf_yasg"]
 
