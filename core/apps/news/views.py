@@ -1,9 +1,12 @@
+from django_filters.rest_framework.backends import DjangoFilterBackend
+from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
+from .filters import NewsFilter
 from .models import News, Tags
 from .serializers import (
     NewsCreateInputSerializer,
@@ -101,6 +104,9 @@ class TagsDetailsApi(GenericAPIView):
 class NewsApi(GenericAPIView):
     serializer_class = NewsOutputSerializer
 
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = NewsFilter
+
     def get_queryset(self):
         return News.objects.all()
 
@@ -136,10 +142,32 @@ class NewsApi(GenericAPIView):
             status=status.HTTP_201_CREATED,
         )
 
-    @swagger_auto_schema(responses={200: TagOutputSerializer})
+    @swagger_auto_schema(
+        responses={200: TagOutputSerializer},
+        manual_parameters=[
+            openapi.Parameter(
+                name="tags_title",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Comma-separated tag titles filter",
+            ),
+            openapi.Parameter(
+                name="keywords",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Comma-separated keywords filter for title and content",
+            ),
+            openapi.Parameter(
+                name="excludes",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_STRING,
+                description="Comma-separated keyword exclude for title and content",
+            ),
+        ],
+    )
     def get(self, request):
-        news = self.get_queryset()
-        paginate_news = self.paginate_queryset(news)
+        queryset = self.filter_queryset(self.get_queryset())
+        paginate_news = self.paginate_queryset(queryset)
         serializer = self.get_serializer(paginate_news, many=True)
         return self.get_paginated_response(serializer.data)
 

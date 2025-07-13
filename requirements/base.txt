@@ -3,3 +3,4 @@ django-environ==0.12.0
 djangorestframework==3.16.0
 drf-yasg==1.21.10
 django-autoslug==1.9.9
+django-filter==25.1

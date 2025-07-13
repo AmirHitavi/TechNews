@@ -27,11 +27,13 @@ class NewsCreateInputSerializer(serializers.Serializer):
     source = serializers.CharField(max_length=50, required=True)
     is_public = serializers.BooleanField(default=True)
     tags = serializers.ListField(
-        child=serializers.CharField(max_length=100), required=True
+        child=serializers.CharField(max_length=100), required=True, allow_empty=False
     )
 
 
 class NewsOutputSerializer(serializers.ModelSerializer):
+    tags = TagOutputSerializer(many=True, read_only=True)
+
     class Meta:
         model = News
         fields = [
@@ -57,6 +59,7 @@ class NewsDetailsInputSerializer(serializers.Serializer):
 
 class NewsDetailsOutputSerializer(serializers.ModelSerializer):
     estimated_reading_time = serializers.SerializerMethodField()
+    tags = TagOutputSerializer(many=True, read_only=True)
 
     class Meta:
 
