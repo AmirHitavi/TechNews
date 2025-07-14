@@ -1,8 +1,9 @@
+from django.db import IntegrityError
 from django_filters.rest_framework.backends import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 
@@ -25,24 +26,38 @@ class TagsApi(GenericAPIView):
     def get_queryset(self):
         return Tags.objects.all()
 
-    def get_serializer(self, *args, **kwargs):
+    def get_serializer_class(self):
         if self.request.method == "POST":
-            return TagInputSerializer(*args, **kwargs)
+            return TagInputSerializer
         else:
-            return TagOutputSerializer(*args, **kwargs)
+            return TagOutputSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        return serializer_class(*args, **kwargs)
 
     @swagger_auto_schema(
         request_body=TagInputSerializer, responses={201: TagOutputSerializer}
     )
     def post(self, request):
+        allowed_keys = {"title", "csrfmiddlewaretoken"}
+        unexpected_keys = set(request.data.keys()) - allowed_keys
+
+        if unexpected_keys:
+            raise ValidationError(f"Invalid input: only {allowed_keys} is allowed.")
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        tag = Tags.objects.create(title=serializer.validated_data.get("title"))
-        return Response(
-            TagOutputSerializer(tag, context={"request": request}).data,
-            status=status.HTTP_201_CREATED,
-        )
+        try:
+            tag = Tags.objects.create(
+                title=serializer.validated_data.get("title").strip()
+            )
+            return Response(
+                TagOutputSerializer(tag, context={"request": request}).data,
+                status=status.HTTP_201_CREATED,
+            )
+        except IntegrityError:
+            raise ValidationError("tag item already exist.")
 
     @swagger_auto_schema(responses={200: TagOutputSerializer})
     def get(self, request):
@@ -59,15 +74,19 @@ class TagsDetailsApi(GenericAPIView):
     def get_queryset(self):
         return Tags.objects.all()
 
-    def get_serializer(self, *args, **kwargs):
+    def get_serializer_class(self):
         if self.request.method == "PUT":
-            return TagInputSerializer(*args, **kwargs)
-        return TagDetailsOutputSerializer(*args, **kwargs)
+            return TagInputSerializer
+        return TagDetailsOutputSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        return serializer_class(*args, **kwargs)
 
     @swagger_auto_schema(responses={200: TagDetailsOutputSerializer})
     def get(self, request, pk):
         try:
-            tag = self.get_object()
+            tag = Tags.objects.get(pk=pk)
             serializer = self.get_serializer(tag)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Tags.DoesNotExist:
@@ -78,11 +97,18 @@ class TagsDetailsApi(GenericAPIView):
     )
     def put(self, request, pk):
         try:
-            tag = self.get_object()
+            tag = Tags.objects.get(pk=pk)
+
+            allowed_keys = {"title", "csrfmiddlewaretoken"}
+            unexpected_keys = set(request.data.keys()) - allowed_keys
+
+            if unexpected_keys:
+                raise ValidationError(f"Invalid input: only {allowed_keys} is allowed.")
+
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
-            tag.title = serializer.validated_data.get("title")
+            tag.title = serializer.validated_data.get("title").strip()
             tag.save()
 
             return Response(
@@ -90,6 +116,8 @@ class TagsDetailsApi(GenericAPIView):
             )
         except Tags.DoesNotExist:
             raise NotFound(detail="tag item not found")
+        except IntegrityError:
+            raise ValidationError("tag item already exist.")
 
     @swagger_auto_schema(responses={204: "No content"})
     def delete(self, request, pk):
@@ -110,16 +138,33 @@ class NewsApi(GenericAPIView):
     def get_queryset(self):
         return News.objects.all()
 
-    def get_serializer(self, *args, **kwargs):
+    def get_serializer_class(self):
         if self.request.method == "POST":
-            return NewsCreateInputSerializer(*args, **kwargs)
+            return NewsCreateInputSerializer
         else:
-            return NewsOutputSerializer(*args, **kwargs)
+            return NewsOutputSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        return serializer_class(*args, **kwargs)
 
     @swagger_auto_schema(
         request_body=NewsCreateInputSerializer, responses={201: NewsOutputSerializer}
     )
     def post(self, request):
+
+        allowed_keys = {
+            "title",
+            "content",
+            "source",
+            "is_public",
+            "tags",
+            "csrfmiddlewaretoken",
+        }
+        unexpected_keys = set(request.data.keys()) - allowed_keys
+
+        if unexpected_keys:
+            raise ValidationError(f"Invalid input: only {allowed_keys} is allowed.")
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -179,19 +224,26 @@ class NewsDetailsApi(GenericAPIView):
     def get_queryset(self):
         return News.objects.all()
 
-    def get_serializer(self, *args, **kwargs):
+    def get_serializer_class(self):
         if self.request.method == "PUT":
-            return NewsDetailsInputSerializer(*args, **kwargs)
-        return NewsDetailsOutputSerializer(*args, **kwargs)
+            return NewsDetailsInputSerializer
+        else:
+            return NewsDetailsOutputSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        serializer_class = self.get_serializer_class()
+        return serializer_class(*args, **kwargs)
 
     @swagger_auto_schema(responses={200: NewsDetailsOutputSerializer})
     def get(self, request, slug):
         try:
-            news = self.get_object()
+            news = News.objects.get(slug=slug)
             serializer = self.get_serializer(news)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Tags.DoesNotExist:
             raise NotFound(detail="tag item not found")
+        except News.DoesNotExist:
+            raise NotFound(detail="news item not found")
 
     @swagger_auto_schema(
         request_body=NewsDetailsInputSerializer,
@@ -199,47 +251,58 @@ class NewsDetailsApi(GenericAPIView):
     )
     def put(self, request, slug):
         try:
-            news = self.get_object()
+            news = News.objects.get(slug=slug)
+
+            allowed_keys = {
+                "title",
+                "content",
+                "source",
+                "is_public",
+                "tags",
+                "csrfmiddlewaretoken",
+            }
+            unexpected_keys = set(request.data.keys()) - allowed_keys
+            if unexpected_keys:
+                raise ValidationError(f"Invalid input: only {allowed_keys} is allowed.")
+
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-
             data = serializer.validated_data
 
             if data.get("title") is not None:
-                news.title = data.get("title")
+                news.title = data["title"]
 
             if data.get("content") is not None:
-                news.content = data.get("content")
+                news.content = data["content"]
 
             if data.get("source") is not None:
-                news.source = data.get("source")
-
-            if data.get("tags") == []:
-                pass
-            else:
-                news.tags.clear()
-                for tag in data.get("tags"):
-                    try:
-                        news.tags.add(Tags.objects.get(title=tag))
-                    except Tags.DoesNotExist:
-                        raise NotFound(detail=f"{tag} tag item not exists.")
+                news.source = data["source"]
 
             if data.get("is_public") is not None:
-                news.is_public = data.get("is_public")
+                news.is_public = data["is_public"]
+
+            if data.get("tags") != []:
+                news.tags.clear()
+                for tag_title in data.get("tags"):
+                    try:
+                        news.tags.add(Tags.objects.get(title=tag_title))
+                    except Tags.DoesNotExist:
+                        raise NotFound(detail=f"{tag_title} tag item not exists.")
 
             news.save()
 
             return Response(
-                TagDetailsOutputSerializer(news).data, status=status.HTTP_204_NO_CONTENT
+                NewsOutputSerializer(news, context={"request": request}).data,
+                status=status.HTTP_204_NO_CONTENT,
             )
-        except Tags.DoesNotExist:
-            raise NotFound(detail="tag item not found")
+        except News.DoesNotExist:
+            raise NotFound(detail="news item not found")
 
     @swagger_auto_schema(responses={204: "No content"})
     def delete(self, request, slug):
         try:
-            news = self.get_object()
+            news = News.objects.get(slug=slug)
             news.delete()
             return Response("No content", status=status.HTTP_204_NO_CONTENT)
-        except Tags.DoesNotExist:
-            raise NotFound(detail="tag item not found")
+        except News.DoesNotExist:
+            raise NotFound(detail="news item not found")
