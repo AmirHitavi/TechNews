@@ -217,9 +217,8 @@ class NewsDetailsApi(GenericAPIView):
             if data.get("tags") == []:
                 pass
             else:
-
                 news.tags.clear()
-                for tag in tags:
+                for tag in data.get("tags"):
                     try:
                         news.tags.add(Tags.objects.get(title=tag))
                     except Tags.DoesNotExist:
