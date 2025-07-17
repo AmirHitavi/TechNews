@@ -23,7 +23,7 @@ class TestTagsApi:
     url = reverse("tag-create-get")
 
     def test_tags_api_get(self):
-        tags = list(reversed(TagsFactory.create_batch(5)))
+        tags = list(TagsFactory.create_batch(5))
 
         response = self.client.get(self.url)
 
@@ -34,7 +34,7 @@ class TestTagsApi:
         for i in range(response.data.get("count")):
             tag = tags[i]
             result = response.data.get("results")[i]
-            assert result.get("id") == tag.id
+            assert result.get("id") == str(tag.id)
             assert result.get("title") == tag.title
 
     def test_tags_api_get_empty(self):
@@ -113,7 +113,7 @@ class TestTagsDetailsApi:
 
         response = self.client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert response.data["id"] == tag.id
+        assert response.data["id"] == str(tag.id)
         assert response.data["title"] == tag.title
 
     def test_tags_details_get_not_found(self):
@@ -133,7 +133,7 @@ class TestTagsDetailsApi:
 
         response = self.client.put(url, data=data)
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert response.data["id"] == tag.id
+        assert response.data["id"] == str(tag.id)
         assert response.data["title"] == data["title"]
 
     def test_tags_details_put_not_found(self):
@@ -226,11 +226,14 @@ class TestNewsApi:
         for i in range(len(response.data.get("results"))):
             news_instance = news[i]
             data = response.data.get("results")[i]
-            assert data.get("id") == news_instance.id
+            assert data.get("id") == str(news_instance.id)
             assert data.get("title") == news_instance.title
             assert data.get("is_public") == news_instance.is_public
-            assert data.get("slug") == news_instance.slug
-            assert data.get("tags") == list(news_instance.tags.values("id", "title"))
+            assert data.get("source") == news_instance.source
+            assert data.get("tags") == [
+                {"id": str(tag["id"]), "title": tag["title"]}
+                for tag in news_instance.tags.order_by("id").values("id", "title")
+            ]
 
     def test_news_api_get_empty(self):
         response = self.client.get(self.url)
@@ -252,14 +255,18 @@ class TestNewsApi:
         }
 
         response = self.client.post(self.url, data=data)
+
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data.get("id")
         assert response.data.get("title") == data.get("title")
         assert response.data.get("source") == data.get("source")
         assert response.data.get("is_public") == data.get("is_public")
-        assert (
-            response.data.get("tags")
-            == [{"id": tag.id, "title": tag.title} for tag in tags][::-1]
+
+        expected_tags = [{"id": str(tag.id), "title": tag.title} for tag in tags]
+        actual_tags = response.data.get("tags")
+
+        assert sorted(actual_tags, key=lambda x: x["id"]) == sorted(
+            expected_tags, key=lambda x: x["id"]
         )
 
     def test_news_api_post_invalid_input(self):
@@ -327,17 +334,19 @@ class TestNewsDetailsApi:
 
     def test_news_details_get(self):
         news = NewsFactory()
-        url = reverse(self.url_name, args=[news.slug])
+        url = reverse(self.url_name, args=[news.pk])
 
         response = self.client.get(url)
         assert response.status_code == status.HTTP_200_OK
-        assert response.data.get("id") == news.id
+        assert response.data.get("id") == str(news.id)
         assert response.data.get("title") == news.title
         assert response.data.get("content") == news.content
         assert response.data.get("source") == news.source
         assert response.data.get("is_public") == news.is_public
-        assert response.data.get("slug") == news.slug
-        assert response.data.get("tags") == list(news.tags.values("id", "title"))
+        assert response.data.get("tags") == [
+            {"id": str(tag["id"]), "title": tag["title"]}
+            for tag in news.tags.order_by("id").values("id", "title")
+        ]
         assert (
             response.data.get("estimated_reading_time") == news.estimated_reading_time
         )
@@ -346,16 +355,17 @@ class TestNewsDetailsApi:
 
     def test_news_details_get_not_found(self):
         news = NewsFactory()
-        news_slug = news.slug
+        pk = news.pk
         news.delete()
 
-        url = reverse(self.url_name, args=[news_slug])
+        url = reverse(self.url_name, args=[pk])
         response = self.client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     def test_news_details_put(self):
         news = NewsFactory()
-        url = reverse(self.url_name, args=[news.slug])
+        pk = news.pk
+        url = reverse(self.url_name, args=[pk])
 
         tags = TagsFactory.create_batch(5)
         tags_title = [tag.title for tag in tags]
@@ -370,37 +380,33 @@ class TestNewsDetailsApi:
 
         response = self.client.put(url, data=data)
 
-        assert response.data.get("slug")
-        new_slug = response.data.get("slug")
-
-        news = News.objects.get(slug=new_slug)
+        news = News.objects.get(pk=pk)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert response.data.get("id") == news.id
+        assert response.data.get("id") == str(news.id)
         assert response.data.get("title") == news.title
 
     def test_news_details_put_empty(self):
         news = NewsFactory()
-        url = reverse(self.url_name, args=[news.slug])
+        pk = news.pk
+        url = reverse(self.url_name, args=[pk])
 
         data = {}
 
         response = self.client.put(url, data=data)
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        assert response.data.get("slug")
 
-        new_slug = response.data.get("slug")
-        news = News.objects.get(slug=new_slug)
+        news = News.objects.get(pk=pk)
 
-        assert response.data.get("id") == news.id
+        assert response.data.get("id") == str(news.id)
         assert response.data.get("title") == news.title
 
     def test_news_details_put_not_found(self):
         news = NewsFactory()
-        news_slug = news.slug
+        pk = news.pk
         news.delete()
 
-        url = reverse(self.url_name, args=[news_slug])
+        url = reverse(self.url_name, args=[pk])
 
         tags = TagsFactory.create_batch(5)
         tags_title = [tag.title for tag in tags]
@@ -418,7 +424,7 @@ class TestNewsDetailsApi:
 
     def test_news_details_put_invalid_input(self):
         news = NewsFactory()
-        url = reverse(self.url_name, args=[news.slug])
+        url = reverse(self.url_name, args=[news.pk])
 
         tags = TagsFactory.create_batch(5)
         tags_title = [tag.title for tag in tags]
@@ -437,7 +443,7 @@ class TestNewsDetailsApi:
 
     def test_news_details_put_not_found_tags(self):
         news = NewsFactory()
-        url = reverse(self.url_name, args=[news.slug])
+        url = reverse(self.url_name, args=[news.pk])
 
         data = {
             # not exists
@@ -449,16 +455,16 @@ class TestNewsDetailsApi:
 
     def test_news_details_delete(self):
         news = NewsFactory()
-        url = reverse(self.url_name, args=[news.slug])
+        url = reverse(self.url_name, args=[news.pk])
 
         response = self.client.delete(url)
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
     def test_news_details_delete_not_found(self):
         news = NewsFactory()
-        news_slug = news.slug
+        pk = news.pk
         news.delete()
-        url = reverse(self.url_name, args=[news_slug])
+        url = reverse(self.url_name, args=[pk])
 
         response = self.client.delete(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -468,8 +474,8 @@ class TestNewsDetailsApi:
         view = NewsDetailsApi()
 
         news = NewsFactory()
-        news_slug = news.slug
-        url = reverse(self.url_name, args=[news_slug])
+        pk = news.pk
+        url = reverse(self.url_name, args=[pk])
 
         tags = TagsFactory.create_batch(5)
         tags_title = [tag.title for tag in tags]
@@ -494,7 +500,7 @@ class TestNewsDetailsApi:
 
     def test_tags_details_invalid_method(self):
         news = NewsFactory()
-        url = reverse(self.url_name, args=[news.slug])
+        url = reverse(self.url_name, args=[news.pk])
 
         response = self.client.patch(url)
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED

@@ -17,7 +17,7 @@ class TestTagsModel:
 
     def test_str_tag(self):
         tag = TagsFactory()
-        assert str(tag) == tag.title.title()
+        assert str(tag) == tag.title
 
 
 @pytest.mark.django_db
@@ -29,7 +29,6 @@ class TestNewsModel:
         assert news.title is not None
         assert news.content is not None
         assert news.source is not None
-        assert news.slug is not None
         assert news.is_public is not None
         assert news.created_at is not None
         assert news.updated_at is not None
@@ -38,7 +37,7 @@ class TestNewsModel:
 
     def test_str_news(self):
         news = NewsFactory()
-        assert str(news) == news.title.title()
+        assert str(news) == news.title
 
     def test_estimate_reading_time(self):
         news = NewsFactory()

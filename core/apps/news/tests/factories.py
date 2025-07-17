@@ -1,5 +1,4 @@
 import factory
-from autoslug.utils import slugify
 from faker import Faker as FakerFactory
 
 from ..models import News, Tags
@@ -20,8 +19,7 @@ class NewsFactory(factory.django.DjangoModelFactory):
 
     title = factory.LazyAttribute(lambda x: faker.sentence())
     content = factory.LazyAttribute(lambda x: faker.paragraph())
-    source = factory.LazyAttribute(lambda x: faker.name())
-    slug = factory.LazyAttribute(lambda obj: slugify(obj.title))
+    source = factory.LazyAttribute(lambda x: faker.url())
 
     @factory.post_generation
     def tags(self, create, extracted, **kwargs):

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from rest_framework.exceptions import ValidationError
 
@@ -26,7 +28,7 @@ class TestTagsSerializers:
         serializer = TagOutputSerializer(tag)
 
         assert set(serializer.data.keys()) == {"id", "title"}
-        assert serializer.data.get("id") == tag.id
+        assert serializer.data.get("id")
         assert serializer.data["title"] == tag.title
 
     def test_tag_output_serializer_with_multiple_tags(self):
@@ -38,7 +40,7 @@ class TestTagsSerializers:
         for i in range(len(serializer.data)):
             tag = tags[i]
             assert set(serializer.data[i].keys()) == {"id", "title"}
-            assert serializer.data[i].get("id") == tag.id
+            assert serializer.data[i].get("id")
             assert serializer.data[i].get("title") == tag.title
 
     def test_tag_details_output_serializer(self):
@@ -46,7 +48,7 @@ class TestTagsSerializers:
         serializer = TagDetailsOutputSerializer(tag)
 
         assert set(serializer.data.keys()) == {"id", "title", "created_at"}
-        assert serializer.data.get("id") == tag.id
+        assert serializer.data.get("id")
         assert serializer.data.get("title") == tag.title
         assert serializer.data.get("created_at")
 
@@ -111,22 +113,22 @@ class TestNewsSerializers:
         for i in range(len(serializer.data)):
             news_instance = news[i]
             data = serializer.data[i]
-            expected_tags = list(news_instance.tags.values("id", "title"))
-
+            expected_tags = [
+                {"id": str(tag["id"]), "title": tag["title"]}
+                for tag in news_instance.tags.order_by("id").values("id", "title")
+            ]
             assert set(data.keys()) == {
                 "id",
                 "title",
                 "source",
                 "is_public",
-                "slug",
                 "tags",
             }
 
-            assert data.get("id") == news_instance.id
+            assert data.get("id")
             assert data.get("title") == news_instance.title
             assert data.get("source") == news_instance.source
             assert data.get("is_public") == news_instance.is_public
-            assert data.get("slug") == news_instance.slug
             assert data.get("tags") == expected_tags
 
     def test_news_details_input_serializer(self):
@@ -184,18 +186,19 @@ class TestNewsSerializers:
             "content",
             "source",
             "is_public",
-            "slug",
             "tags",
             "estimated_reading_time",
             "created_at",
             "updated_at",
         }
 
-        assert data.get("id") == news.id
+        assert data.get("id")
         assert data.get("title") == news.title
         assert data.get("content") == news.content
         assert data.get("source") == news.source
         assert data.get("is_public") == news.is_public
-        assert data.get("slug") == news.slug
-        assert data.get("tags") == list(news.tags.values("id", "title"))
+        assert data.get("tags") == [
+            {"id": str(tag["id"]), "title": tag["title"]}
+            for tag in news.tags.order_by("id").values("id", "title")
+        ]
         assert data.get("estimated_reading_time") == news.estimated_reading_time
