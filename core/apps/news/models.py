@@ -1,4 +1,5 @@
-from autoslug import AutoSlugField
+import uuid
+
 from django.db import models
 from django.utils import timezone
 
@@ -7,28 +8,35 @@ from .read_time_engine import NewsReadTimeEngine
 # Create your models here.
 
 
-class Tags(models.Model):
-    title = models.CharField(max_length=100, unique=True, null=False)
+class BaseModel(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True, db_index=True)
     created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        abstract = True
+        ordering = [
+            "-created_at",
+        ]
+
+
+class Tags(BaseModel):
+    title = models.CharField(max_length=255, unique=True)
 
     class Meta:
         verbose_name = "Tag"
         verbose_name_plural = "Tags"
-        ordering = ["-created_at"]
 
     def __str__(self):
-        return self.title.title()
+        return self.title
 
 
-class News(models.Model):
-    title = models.CharField(max_length=100, null=False)
+class News(BaseModel):
+    title = models.CharField(max_length=255, null=False)
     content = models.TextField(null=False)
-    source = models.CharField(max_length=50, null=False)
-    is_public = models.BooleanField(null=False, default=True)
-    slug = AutoSlugField(populate_from="title", always_update=True, unique=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    source = models.URLField(unique=True)
     tags = models.ManyToManyField(Tags, related_name="news")
+    is_public = models.BooleanField(null=False, default=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "News"
@@ -36,7 +44,7 @@ class News(models.Model):
         ordering = ["-updated_at", "-created_at"]
 
     def __str__(self):
-        return self.title.title()
+        return self.title
 
     @property
     def estimated_reading_time(self):

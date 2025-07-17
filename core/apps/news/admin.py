@@ -14,7 +14,7 @@ class AdminTags(admin.ModelAdmin):
 
 @admin.register(News)
 class AdminNews(admin.ModelAdmin):
-    list_display = ["title", "source", "is_public", "slug", "created_at", "updated_at"]
+    list_display = ["title", "source", "is_public", "created_at", "updated_at"]
     list_editable = ["is_public"]
     list_filter = ["source", "tags"]
     search_fields = ["title", "source", "tags__title"]

@@ -4,3 +4,5 @@ djangorestframework==3.16.0
 drf-yasg==1.21.10
 django-autoslug==1.9.9
 django-filter==25.1
+Scrapy==2.13.3
+scrapy-playwright==0.0.43

@@ -219,7 +219,7 @@ class NewsApi(GenericAPIView):
 
 class NewsDetailsApi(GenericAPIView):
     serializer_class = NewsDetailsOutputSerializer
-    lookup_field = "slug"
+    lookup_field = "pk"
 
     def get_queryset(self):
         return News.objects.all()
@@ -235,9 +235,9 @@ class NewsDetailsApi(GenericAPIView):
         return serializer_class(*args, **kwargs)
 
     @swagger_auto_schema(responses={200: NewsDetailsOutputSerializer})
-    def get(self, request, slug):
+    def get(self, request, pk):
         try:
-            news = News.objects.get(slug=slug)
+            news = News.objects.get(pk=pk)
             serializer = self.get_serializer(news)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Tags.DoesNotExist:
@@ -249,9 +249,9 @@ class NewsDetailsApi(GenericAPIView):
         request_body=NewsDetailsInputSerializer,
         responses={204: NewsDetailsOutputSerializer},
     )
-    def put(self, request, slug):
+    def put(self, request, pk):
         try:
-            news = News.objects.get(slug=slug)
+            news = News.objects.get(pk=pk)
 
             allowed_keys = {
                 "title",
@@ -299,9 +299,9 @@ class NewsDetailsApi(GenericAPIView):
             raise NotFound(detail="news item not found")
 
     @swagger_auto_schema(responses={204: "No content"})
-    def delete(self, request, slug):
+    def delete(self, request, pk):
         try:
-            news = News.objects.get(slug=slug)
+            news = News.objects.get(pk=pk)
             news.delete()
             return Response("No content", status=status.HTTP_204_NO_CONTENT)
         except News.DoesNotExist:

@@ -41,10 +41,9 @@ class NewsOutputSerializer(serializers.ModelSerializer):
             "title",
             "source",
             "is_public",
-            "slug",
             "tags",
         ]
-        read_only_fields = ["id", "slug"]
+        read_only_fields = ["id", "source"]
 
 
 class NewsDetailsInputSerializer(serializers.Serializer):
@@ -70,13 +69,12 @@ class NewsDetailsOutputSerializer(serializers.ModelSerializer):
             "content",
             "source",
             "is_public",
-            "slug",
             "tags",
             "estimated_reading_time",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "slug", "created_at", "updated_at"]
+        read_only_fields = ["id", "source", "created_at", "updated_at"]
 
     def get_estimated_reading_time(self, obj):
         return obj.estimated_reading_time
