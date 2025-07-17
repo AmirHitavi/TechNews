@@ -7,6 +7,11 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+import os
+from pathlib import Path
+import sys
+import django
+
 BOT_NAME = "scraper"
 
 SPIDER_MODULES = ["scraper.spiders"]
@@ -58,9 +63,9 @@ DOWNLOAD_DELAY = 1
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#    "scraper.pipelines.ScraperPipeline": 300,
-# }
+ITEM_PIPELINES = {
+   "scraper.pipelines.SaveNewsToDjangoPipeLine": 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -93,3 +98,13 @@ DOWNLOAD_HANDLERS = {
 }
 
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
+
+
+django_path = Path(__file__).resolve().parent.parent
+sys.path.append(str(django_path)+"/")
+
+# Change this in prod
+os.environ['DJANGO_SETTINGS_MODULE'] = 'config.settings.local'
+django.setup()
+
+from apps.news.models import News, Tags
