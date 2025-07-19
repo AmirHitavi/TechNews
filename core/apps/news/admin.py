@@ -16,7 +16,7 @@ class AdminTags(admin.ModelAdmin):
 class AdminNews(admin.ModelAdmin):
     list_display = ["title", "source", "is_public", "created_at", "updated_at"]
     list_editable = ["is_public"]
-    list_filter = ["source", "tags"]
-    search_fields = ["title", "source", "tags__title"]
-    search_help_text = "Search for News via 'title', 'source', 'tags'"
+    list_filter = ["tags"]
+    search_fields = ["title", "tags__title"]
+    search_help_text = "Search for News via 'title', 'tags'"
     ordering = ["-created_at", "-updated_at"]

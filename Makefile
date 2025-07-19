@@ -27,3 +27,6 @@ migrate:
 
 db:
 	sqlite3 db.sqlite3
+
+zoomit:
+	python core/manage.py scrape_zoomit

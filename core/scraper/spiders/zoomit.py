@@ -8,9 +8,22 @@ class ZoomitSpider(scrapy.Spider):
         "https://www.zoomit.ir/archive/?sort=Newest&publishDate=All&readingTime=All&pageNumber=1"
     ]
 
+    def __init__(self, custom_url=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.custom_url = custom_url
+
     def start_requests(self):
-        for url in self.start_urls:
-            yield scrapy.Request(url, meta={"playwright": True}, callback=self.parse)
+        if self.custom_url:
+            yield scrapy.Request(
+                self.custom_url,
+                meta={"playwright": True},
+                callback=self.parse_news_page,
+            )
+        else:
+            for url in self.start_urls:
+                yield scrapy.Request(
+                    url, meta={"playwright": True}, callback=self.parse
+                )
 
     def parse(self, response):
         article_urls = response.css("a.fNLyDV::attr(href)").getall()

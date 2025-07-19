@@ -108,4 +108,4 @@ sys.path.append(str(django_path) + "/")
 os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings.local"
 django.setup()
 
-from apps.news.models import News, Tags
+# from apps.news.models import News, Tags
