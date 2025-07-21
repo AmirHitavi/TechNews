@@ -232,7 +232,7 @@ class TestNewsApi:
             assert data.get("source") == news_instance.source
             assert data.get("tags") == [
                 {"id": str(tag["id"]), "title": tag["title"]}
-                for tag in news_instance.tags.order_by("id").values("id", "title")
+                for tag in news_instance.tags.values("id", "title")
             ]
 
     def test_news_api_get_empty(self):
@@ -263,11 +263,7 @@ class TestNewsApi:
         assert response.data.get("is_public") == data.get("is_public")
 
         expected_tags = [{"id": str(tag.id), "title": tag.title} for tag in tags]
-        actual_tags = response.data.get("tags")
-
-        assert sorted(actual_tags, key=lambda x: x["id"]) == sorted(
-            expected_tags, key=lambda x: x["id"]
-        )
+        assert response.data.get("tags") == expected_tags
 
     def test_news_api_post_invalid_input(self):
 
@@ -345,7 +341,7 @@ class TestNewsDetailsApi:
         assert response.data.get("is_public") == news.is_public
         assert response.data.get("tags") == [
             {"id": str(tag["id"]), "title": tag["title"]}
-            for tag in news.tags.order_by("id").values("id", "title")
+            for tag in news.tags.values("id", "title")
         ]
         assert (
             response.data.get("estimated_reading_time") == news.estimated_reading_time

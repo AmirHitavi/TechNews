@@ -13,23 +13,26 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from os import path
 from pathlib import Path
 
-import environ
+from celery.schedules import crontab
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-environ.Env.read_env(path.join(BASE_DIR, ".env"))
 
-env = environ.Env()
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 
 # Application definition
 
 LOCAL_APPS = ["apps.news.apps.NewsConfig"]
 
-THIRD_PARTY_APPS = ["rest_framework", "drf_yasg", "django_filters"]
+THIRD_PARTY_APPS = [
+    "rest_framework",
+    "drf_yasg",
+    "django_filters",
+    "django_celery_beat",
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -123,4 +126,15 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
+}
+
+
+CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
+
+CELERY_BEAT_SCHEDULE = {
+    "scrape-zoomit": {
+        "task": "apps.news.tasks.scrape_zoomit",
+        "schedule": crontab(minute="*/2"),
+    },
 }

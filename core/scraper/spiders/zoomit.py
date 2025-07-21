@@ -57,7 +57,10 @@ class ZoomitSpider(scrapy.Spider):
         content_divs = response.css("div.sc-481293f7-1.jrhnOU")
         for div in content_divs:
             paragraphs = div.css(".sc-9996cfc-0")
+
             for p in paragraphs:
+                if "fyrndR" in p.attrib.get("class", ""):
+                    continue
                 text_parts = p.css("::text").getall()
                 clean_text = " ".join(t.strip() for t in text_parts if t.strip())
 

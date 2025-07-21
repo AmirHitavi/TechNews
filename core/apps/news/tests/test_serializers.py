@@ -113,7 +113,7 @@ class TestNewsSerializers:
             data = serializer.data[i]
             expected_tags = [
                 {"id": str(tag["id"]), "title": tag["title"]}
-                for tag in news_instance.tags.order_by("id").values("id", "title")
+                for tag in news_instance.tags.values("id", "title")
             ]
             assert set(data.keys()) == {
                 "id",
@@ -175,6 +175,10 @@ class TestNewsSerializers:
     def test_news_details_output_serializer(self):
         news = NewsFactory()
         serializer = NewsDetailsOutputSerializer(news)
+        expected_tags = [
+            {"id": str(tag["id"]), "title": tag["title"]}
+            for tag in news.tags.values("id", "title")
+        ]
 
         data = serializer.data
 
@@ -195,8 +199,5 @@ class TestNewsSerializers:
         assert data.get("content") == news.content
         assert data.get("source") == news.source
         assert data.get("is_public") == news.is_public
-        assert data.get("tags") == [
-            {"id": str(tag["id"]), "title": tag["title"]}
-            for tag in news.tags.order_by("id").values("id", "title")
-        ]
+        assert data.get("tags") == expected_tags
         assert data.get("estimated_reading_time") == news.estimated_reading_time

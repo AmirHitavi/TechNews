@@ -1,8 +1,8 @@
 from .base import *  # noqa
-from .base import BASE_DIR, env
+from .base import BASE_DIR, config
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("LOCAL_SECRET_KEY", cast=str)
+SECRET_KEY = config("LOCAL_SECRET_KEY", cast=str)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -12,10 +12,15 @@ DEBUG = True
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": config("POSTGRES_DB"),
+        "USER": config("POSTGRES_USER"),
+        "PASSWORD": config("POSTGRES_PASSWORD"),
+        "HOST": config("POSTGRES_HOST"),
+        "PORT": config("POSTGRES_PORT"),
     }
 }
+
 
 LOGGING = {
     "version": 1,
