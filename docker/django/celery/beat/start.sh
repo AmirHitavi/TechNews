@@ -1,0 +1,6 @@
+#!/bin/sh
+set -o errexit
+set -o nounset
+
+cd /src/core 
+exec celery -A config.celery beat -l info

@@ -1,0 +1,107 @@
+version: "3.9"
+
+services:
+
+  db:
+    container_name: db
+    image: postgres
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - tech_news_network
+  
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+    networks:
+      - tech_news_network
+  
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - tech_news_network
+  
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/django/Dockerfile
+    image: tech_news_api
+    container_name: api
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - .:/src
+    ports:
+      - "8000:8000"
+    command: /start.sh
+    depends_on:
+      - redis
+      - db
+    networks:
+      - tech_news_network
+
+  worker:
+    image: tech_news_api
+    container_name: worker
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - .:/src
+    command: /worker.sh
+    depends_on:
+      - redis
+      - db
+    networks:
+      - tech_news_network
+  
+  flower:
+    image: tech_news_api
+    container_name: flower
+    env_file:
+      - .env
+    volumes:
+      - .:/src
+    command: /flower.sh
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - db
+    networks:
+      - tech_news_network
+    
+  beat:
+    image: tech_news_api
+    container_name: beat
+    env_file:
+      - .env
+    volumes:
+      - .:/src
+    command: /beat.sh
+    depends_on:
+      - redis
+      - db
+      - api
+    networks:
+      - tech_news_network
+
+networks:
+  tech_news_network:
+    driver: bridge
+
+volumes:
+  db_data:
