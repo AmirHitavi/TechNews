@@ -2,6 +2,8 @@
 
 ![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)
 ![Scrapy](https://img.shields.io/badge/Scrapy-FF9500?style=for-the-badge&logo=scrapy&logoColor=white)
+![Celery](https://img.shields.io/badge/Celery-37814A?style=for-the-badge&logo=celery&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 This repository is for internship project.
 
@@ -12,7 +14,9 @@ This repository is for internship project.
 - Django Filter
 - Scrapy
 - Scrapy Playwright
-
+- Celery
+- Redis
+- Docker
 
 ## Challenge 1: REST API Implementation
 
@@ -39,38 +43,6 @@ This repository is for internship project.
 - `DELETE /tag/news/`: Delete the tag item
 
 
-### How to Run
-1. Clone the repository
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. Install dependencies:
-   ```
-   pip install -r requirements/local.txt
-   ```
-4. Run migrations:
-   ```
-   make migrate
-   ```
-5. Create a superuser (optional for admin access):
-   ```
-   make make-super
-   ```
-6. Run the development server:
-   ```
-   make runserver
-   ```
-
-
-### Running Tests
-```
-make test
-or
-make cov
-```
-
 ## Challenge 2: News Data Collection
 
 ### Features
@@ -79,21 +51,72 @@ make cov
 - Returns data in the same format as Challenge 1 API expects
 - Can be integrated with the API database
 
-### How to Run
-1. Install Scrapy:
+
+## Challenge 3: Celery & Dockerization
+
+### Features
+- Added Celery for periodic news scraping tasks
+- Configured Celery Beat for scheduling
+- Redis as message broker
+- Flower for monitoring Celery tasks
+- Dockerized the entire application
+
+### New Components
+- Redis container (message broker)
+- Celery worker container
+- Celery beat container
+- Flower container (monitoring)
+
+
+## How to Run
+1. Build and start containers:
    ```
-   pip install scrapy
-   pip install scrapy-playwright
-   playwright install
+   docker-compose up -d --build
    ```
-2. Run to scrape all the articles:
+2. Access services:
+   - Django app: http://localhost:8000
+   - Flower (Celery monitoring): http://localhost:5555
+   - Pgadmin: http://localhost:5050
+3. To stop:
    ```
-   python core/manage.py scrape_zoomit
+   docker-compose down
+   ```
+4. To test:
+   ```
+   make pytest
+   or 
+   make pytest-cov
+   ```
+5. Run to scrape all the articles:
+   ```
+   docker exec -it api python core/manage.py scrape_zoomit
    or
    make zoomit
    ```
-3. Run to scrape just one single article:
+6. Run to scrape just one single article:
    ```
-   python core/manage.py scrape_single {url}
+   docker exec -it api python core/manage.py scrape_single {url}
+
    ```
 
+### Environment Variables
+Configure in `.env` file:
+```
+LOCAL_SECRET_KEY=
+
+POSTGRES_DB=
+POSTGRES_USER=
+POSTGRES_PASSWORD=
+POSTGRES_HOST=
+POSTGRES_PORT=
+DATABASE_URL=
+
+PGADMIN_DEFAULT_EMAIL=
+PGADMIN_DEFAULT_PASSWORD=
+
+CELERY_BROKER_URL=
+CELERY_RESULT_BACKEND=
+
+CELERY_FLOWER_USER=
+CELERY_FLOWER_PASSWORD=
+```
