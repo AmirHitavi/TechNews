@@ -6,8 +6,6 @@
 
 from apps.news.models import News, Tags
 from asgiref.sync import sync_to_async
-from django.db import IntegrityError
-
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
 

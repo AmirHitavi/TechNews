@@ -71,7 +71,7 @@ pytest:
 	docker exec -it api pytest core/apps/news/tests/ 
 
 pytest-cov:
-	docker exec -it api pytest -p no:warnings  --cov=. --cov-report html
+	docker exec -it api pytest core/apps/news/tests/  -p no:warnings  --cov=. --cov-report html
 
 zoomit:
 	docker exec -it api python core/manage.py scrape_zoomit

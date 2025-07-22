@@ -20,8 +20,6 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-
 
 # Application definition
 
@@ -99,7 +97,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Tehran"
 
 USE_I18N = True
 
@@ -131,10 +129,11 @@ REST_FRAMEWORK = {
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND")
+CELERY_TIME_ZONE = TIME_ZONE
 
 CELERY_BEAT_SCHEDULE = {
     "scrape-zoomit": {
         "task": "apps.news.tasks.scrape_zoomit",
-        "schedule": crontab(minute="*/2"),
+        "schedule": crontab(minute="*/45"),
     },
 }

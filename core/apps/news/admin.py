@@ -19,4 +19,6 @@ class AdminNews(admin.ModelAdmin):
     list_filter = ["tags"]
     search_fields = ["title", "tags__title"]
     search_help_text = "Search for News via 'title', 'tags'"
-    ordering = ["-created_at", "-updated_at"]
+    ordering = [
+        "created_at",
+    ]

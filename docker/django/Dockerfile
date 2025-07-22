@@ -68,4 +68,3 @@ RUN chmod +x /beat.sh
 COPY . ${APP_HOME}
 
 ENTRYPOINT ["/entrypoint.sh"]
-
